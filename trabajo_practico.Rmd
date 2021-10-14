@@ -1,0 +1,15 @@
+---
+title: "Trabajo Practico - Laboratorio de Datos"
+author: "Morales Joaquin, Lasorsa Lautaro y Palazzo Tomas"
+date: "14/10/2021"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+  html_notebook:
+    theme: lumen
+    toc: yes
+    toc_float: yes
+subtitle: "Laboratorio de Datos"
+---
+
