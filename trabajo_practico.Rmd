@@ -13,3 +13,17 @@ output:
 subtitle: "Laboratorio de Datos"
 ---
 
+```{r}
+#library(RCurl)
+#myfile <- getURL('https://sakai.unc.edu/access/content/group/3d1eb92e-7848-4f55-90c3-7c72a54e7e43/public/data/bycatch.csv', #ssl.verifyhost=FALSE, ssl.verifypeer=FALSE)
+datos_2014 = read.csv('../TP_LaboDeDatos/Data/aterrizajes-y-despegues-registrados-por-eana-2014.csv', encoding = 'latin1', sep = ';')
+datos_2015 = read.csv('../TP_LaboDeDatos/Data/aterrizajes-y-despegues-registrados-por-eana-2015.csv', encoding = 'latin1', sep = ';')
+datos_2016 = read.csv('../TP_LaboDeDatos/Data/aterrizajes-y-despegues-registrados-por-eana-2016.csv', encoding = 'latin1', sep = ';')
+datos_2017 = read.csv('../TP_LaboDeDatos/Data/aterrizajes-y-despegues-registrados-por-eana-2017.csv', encoding = 'latin1', sep = ';')
+datos_2018 = read.csv('../TP_LaboDeDatos/Data/aterrizajes-y-despegues-registrados-por-eana-2018.csv', encoding = 'latin1', sep = ';')
+datos_2019 = read.csv('../TP_LaboDeDatos/Data/aterrizajes-y-despegues-registrados-por-eana-2019.csv', encoding = 'latin1', sep = ';')
+datos_2020 = read.csv('../TP_LaboDeDatos/Data/aterrizajes-y-despegues-registrados-por-eana-2020.csv', encoding = 'latin1', sep = ';')
+
+
+```
+
