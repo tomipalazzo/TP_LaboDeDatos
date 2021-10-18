@@ -40,18 +40,35 @@ datos = rbind(datos_2014,datos_2015,datos_2016,datos_2017,datos_2018,datos_2019,
 ```{r}
 # Utilizamos la tabla que se encuentra en 'https://en.wikipedia.org/wiki/List_of_airports_in_Argentina'
 # para acceder a las variables de ciudad, provincia y coordenadas de cada aeropuerto 
-aeropuertos_wiki = read_html('https://en.wikipedia.org/wiki/List_of_airports_in_Argentina')
-elemento_tabla  = html_element(var_extras,'.wikitable')
 
-aeropuertos = html_table(elemento_tabla)
+aeropuertos_wiki = read_html('https://en.wikipedia.org/wiki/List_of_airports_in_Argentina')
+elemento_tabla   = html_element(aeropuertos_wiki,'.wikitable')
+aeropuertos      = html_table(elemento_tabla)
+
+
+# Variables utiles
+N = dim(datos)[1]
+cant_aeropuertos = dim(aeropuertos)[1]
+
+```
+
+```{r}
+# Corrijo la columna de coordenadas 
+
+separar     = strsplit((aeropuertos$Coordinates), '/') # Divide a los strings en los lugares donde haya '/' 
+coordenadas = sapply(listado, function(x) x[3])        # Me quedo solo con el 3er tipo de coordenada
+coordenadas = gsub('[^0-9,.,-]','', vel_vec)           # Elimino los caracteres que no quiero utilizar
+
+aeropuertos = aeropuertos %>% 
+  mutate(lat = as.numeric(substr(coordenadas, 1, 9)), long = as.numeric(substr(coordenadas, 10, 18))) # Separo a mano latitud y longitud (revizar si esta todo en orden)
+
 
 ```
 
 
+
 ```{r}
 # Agregando Ciudades
-N = dim(datos)[1]
-cant_aeropuertos = dim(aeropuertos)[1]
 
 datos$ciudad_origen     = rep(NA, length(N))
 datos$ciudad_destino    = rep(NA, length(N))
