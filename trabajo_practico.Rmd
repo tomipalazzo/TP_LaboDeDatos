@@ -56,12 +56,13 @@ cant_aeropuertos = dim(aeropuertos)[1]
 # Corrijo la columna de coordenadas 
 
 separar     = strsplit((aeropuertos$Coordinates), '/') # Divide a los strings en los lugares donde haya '/' 
-coordenadas = sapply(listado, function(x) x[3])        # Me quedo solo con el 3er tipo de coordenada
-coordenadas = gsub('[^0-9,.,-]','', vel_vec)           # Elimino los caracteres que no quiero utilizar
+coordenadas = sapply(separar, function(x) x[3])        # Me quedo solo con el 3er tipo de coordenada
+coordenadas = gsub('[^0-9,.,-]','', coordenadas)           # Elimino los caracteres que no quiero utilizar
 
 aeropuertos = aeropuertos %>% 
   mutate(lat = as.numeric(substr(coordenadas, 1, 9)), long = as.numeric(substr(coordenadas, 10, 18))) # Separo a mano latitud y longitud (revizar si esta todo en orden)
 
+aeropuertos = aeropuertos[!is.null(aeropuertos$ICAO)]
 
 ```
 
