@@ -34,7 +34,7 @@ datos_2020 = read.csv('../TP_LaboDeDatos/Data/aterrizajes-y-despegues-registrado
 
 # Concateno todos los datos
 datos = rbind(datos_2014,datos_2015,datos_2016,datos_2017,datos_2018,datos_2019,datos_2020)
-
+datos2= read.csv('../TP_LaboDeDatos/Data/202109-informe-ministerio.csv', encoding = 'latin1', sep = ';')
 ```
 
 ```{r}
@@ -62,33 +62,69 @@ coordenadas = gsub('[^0-9,.,-]','', coordenadas)           # Elimino los caracte
 aeropuertos = aeropuertos %>% 
   mutate(lat = as.numeric(substr(coordenadas, 1, 9)), long = as.numeric(substr(coordenadas, 10, 18))) # Separo a mano latitud y longitud (revizar si esta todo en orden)
 
-aeropuertos = aeropuertos[!is.null(aeropuertos$ICAO)]
+aeropuertos = filter(aeropuertos, nchar(ICAO)>1)
+aeropuertos = aeropuertos[order(aeropuertos$ICAO),]
+```
+
+```{r}
+#Por ahora esta parte no sirve pero está bueno tenerla
+# Agregando Ciudades
+N2 = length(datos2$Hora.UTC)
+datos2$ciudad_origen     = rep(NA, length(N2))
+datos2$ciudad_destino    = rep(NA, length(N2))
+datos2$provincia_origen  = rep(NA, length(N2))
+datos2$provincia_destino = rep(NA, length(N2))
+datos2$lat_origen        = rep(NA, length(N2)) 
+datos2$long_origen       = rep(NA, length(N2)) 
+datos2$lat_destino       = rep(NA, length(N2)) 
+datos2$long_destino      = rep(NA, length(N2)) 
+# datos %>% mutate(ciudad_origen = ) # Aca queria hacer exactamente lo de arriba pero usando dplyr
+
+
+
+# El algoritmo de abajo ndar anda, tarda un monton. Hay que agregar el resto de las variables
+
+for(i in 1:length(aeropuertos$ICAO)){
+  inds = datos$Origen.OACI==aeropuertos$ICAO[i]
+  datos2[inds,c('ciudad_origen','provincia_origen','lat_origen','long_origen')] = aeropuertos[i,c("City served","Province","lat","long")]
+  
+  inds = datos2$Origen==aeropuertos$IATA[i]
+  datos2[inds,c('ciudad_destino','provincia_destino','lat_destino','long_destino')] = aeropuertos[i,c("City served","Province","lat","long")]
+  
+  
+}
+
 
 ```
 
 
-
 ```{r}
+#Por ahora esta parte no sirve pero está bueno tenerla
 # Agregando Ciudades
 
 datos$ciudad_origen     = rep(NA, length(N))
 datos$ciudad_destino    = rep(NA, length(N))
 datos$provincia_origen  = rep(NA, length(N))
 datos$provincia_destino = rep(NA, length(N))
+datos$lat_origen        = rep(NA, length(N)) 
+datos$long_origen       = rep(NA, length(N)) 
+datos$lat_destino       = rep(NA, length(N)) 
+datos$long_destino      = rep(NA, length(N)) 
 # datos %>% mutate(ciudad_origen = ) # Aca queria hacer exactamente lo de arriba pero usando dplyr
 
 
 
 # El algoritmo de abajo ndar anda, tarda un monton. Hay que agregar el resto de las variables
-for (i in 1:N){
-  for (j in 1:cant_aeropuertos){
-    if (datos$Origen.OACI[i] == aeropuertos$ICAO[j]) {
-        datos$ciudad_origen[i] = aeropuertos$`City served`[j] 
-        datos$provincia_origen[i] = aeropuertos$Province[j]
-    }
-  }
-}
 
+for(i in 1:length(aeropuertos$ICAO)){
+  inds = datos$Origen.OACI==aeropuertos$ICAO[i]
+  datos[inds,c('ciudad_origen','provincia_origen','lat_origen','long_origen')] = aeropuertos[i,c("City served","Province","lat","long")]
+  
+  inds = datos$Origen.OACI==aeropuertos$ICAO[i]
+  datos[inds,c('ciudad_destino','provincia_destino','lat_destino','long_destino')] = aeropuertos[i,c("City served","Province","lat","long")]
+  
+  
+}
 
 
 ```
