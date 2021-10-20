@@ -100,19 +100,20 @@ unique(datos2$Origen...Destino)
 Una pregunta que nos pareció interesante es ver qué pares de aeropuertos se comunican más. 
 ```{r}
 library(ggplot2)
-aers = unique(datos2$Aeropuerto)
-mat = matrix(nrow = length(aers), ncol = length(aers))
-colnames(mat) = aers
-row.names(mat) = aers
-for(i in 1:length(aers)){
-  for(j in 1:length(aers)){
-    mat[i,j]  =  sum((datos2$Aeropuerto==aers[i]) & (datos2$Origen...Destino==aers[j]))
+aersA = unique(datos2$Aeropuerto)
+aersB = unique(datos2$Origen...Destino)
+mat = matrix(nrow = length(aersA), ncol = length(aersB))
+row.names(mat) = aersA
+colnames(mat) = aersB
+for(i in 1:length(aersA)){
+  for(j in 1:length(aersB)){
+    mat[i,j]  =  sum((datos2$Aeropuerto==aersA[i]) & (datos2$Origen...Destino==aersB[j]))
   }
 }
 #heatmap(mat,Colv = NA, Rowv = NA, scale="column")
 library(heatmaply)
 help("heatmaply")
-heatmaply(mat,cellnote=mat, Rowv = NA, Colv = NA, scale="column", col_dend_up=TRUE)%>% 
+heatmaply(mat,cellnote=mat, Rowv = NA, Colv = NA, col_dend_up=TRUE, ylab="Aeropuerto", xlab="Origen/Destino")%>% 
   layout(xaxis = list(side = "top"))
 ```
 
