@@ -85,16 +85,15 @@ datos2$long_destino      = rep(NA, length(N2))
 # El algoritmo de abajo ndar anda, tarda un monton. Hay que agregar el resto de las variables
 
 for(i in 1:length(aeropuertos$ICAO)){
-  inds = datos$Origen.OACI==aeropuertos$ICAO[i]
+  inds = datos2$Aeropuerto==aeropuertos$IATA[i]
   datos2[inds,c('ciudad_origen','provincia_origen','lat_origen','long_origen')] = aeropuertos[i,c("City served","Province","lat","long")]
   
-  inds = datos2$Origen==aeropuertos$IATA[i]
+  inds = datos2$Origen...Destino==aeropuertos$IATA[i]
   datos2[inds,c('ciudad_destino','provincia_destino','lat_destino','long_destino')] = aeropuertos[i,c("City served","Province","lat","long")]
   
   
 }
-
-
+datos2 = drop_na(datos2)
 ```
 
 
@@ -125,7 +124,7 @@ for(i in 1:length(aeropuertos$ICAO)){
   
   
 }
-
+datos = drop_na(datos)
 
 ```
 
