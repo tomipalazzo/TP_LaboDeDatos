@@ -97,7 +97,7 @@ datos2 = drop_na(datos2)
 datos2$distancia = distHaversine(datos2[,c("long_origen","lat_origen")],datos2[,c("long_destino","lat_destino")])
 unique(datos2$Origen...Destino)
 ```
-Una pregunta que nos pareció interesante es ver qué pares de aeropuertos se comunican más. 
+Una pregunta que nos pareció interesante es ver qué pares de aeropuertos se comunican más. Para eso hicimos un mapa de calor. En el mismo se puede notar que no todos los vuelos tienen registrado tanto su despegue como aterrizaje, y de hecho hay aeropuertos donde no se registran los vuelos (por eso solo aparecen como el otro aeropuerto en los registros)
 ```{r}
 library(ggplot2)
 aersA = unique(datos2$Aeropuerto)
@@ -115,6 +115,20 @@ library(heatmaply)
 help("heatmaply")
 heatmaply(mat,cellnote=mat, Rowv = NA, Colv = NA, col_dend_up=TRUE, ylab="Aeropuerto", xlab="Origen/Destino")%>% 
   layout(xaxis = list(side = "top"))
+```
+Notar que los vuelos que empiezan y terminan en el mismo aeropuerto, que son casi la mitad, es muy factible que sean vuelos de entrenamiento.
+
+En aersC podemos ver los aeropuertos que no registran los eventos que ocurren en ellos. Al menos si consideramos solo los vuelos nacionales. 
+```{r}
+aersC = NULL
+for(x in aersB){
+  if(sum(aersA==x)==0)
+  { 
+    if(is.null(aersC)) aersC = c(x)
+    else aersC = c(aersC,x)
+  }  
+}
+print(aersC)
 ```
 
 ```{r}
