@@ -109,7 +109,11 @@ for(i in 1:length(aers)){
     mat[i,j]  =  sum((datos2$Aeropuerto==aers[i]) & (datos2$Origen...Destino==aers[j]))
   }
 }
-heatmap(mat,Colv = NA, Rowv = NA, scale="column")
+#heatmap(mat,Colv = NA, Rowv = NA, scale="column")
+library(heatmaply)
+help("heatmaply")
+heatmaply(mat,cellnote=mat, Rowv = NA, Colv = NA, scale="column", col_dend_up=TRUE)%>% 
+  layout(xaxis = list(side = "top"))
 ```
 
 ```{r}
