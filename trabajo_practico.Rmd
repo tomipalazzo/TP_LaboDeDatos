@@ -126,7 +126,7 @@ for(i in 1:length(aeropuertos$ICAO)){
   
 }
 datos = drop_na(datos)
-
+datos$distancia = distHaversine(datos[,c("long_origen","lat_origen")],datos[,c("long_destino","lat_destino")])
 ```
 
 
