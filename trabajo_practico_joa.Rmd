@@ -1,0 +1,133 @@
+---
+title: "Trabajo Practico - Laboratorio de Datos"
+author: "Morales Joaquin, Lasorsa Lautaro y Palazzo Tomas"
+date: "14/10/2021"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+  html_notebook:
+    theme: lumen
+    toc: yes
+    toc_float: yes
+subtitle: "Laboratorio de Datos"
+---
+
+```{r}
+# Librerias
+require(tidyverse)
+require(geosphere)
+require(rvest) # Cargamos el paquete
+```
+
+
+```{r}
+# Llamamos a los DataSets
+
+datos_2021 = read.csv('../TP_LaboDeDatos/Data/sna_abril_2021_fixed_encoding.csv', encoding = 'UTF-8', sep = ',')
+
+# Concateno todos los datos
+datos2= read_csv2('../TP_LaboDeDatos/Data/202109-informe-ministerio.csv')
+
+datos2$Fecha_completa = strptime(paste(datos2$Fecha, datos2$`Hora UTC`), format = "%d/%m/%Y %H:%M:%S")
+
+```
+
+```{r}
+# Utilizamos la tabla que se encuentra en 'https://en.wikipedia.org/wiki/List_of_airports_in_Argentina'
+# para acceder a las variables de ciudad, provincia y coordenadas de cada aeropuerto 
+
+aeropuertos_wiki = read_html('https://en.wikipedia.org/wiki/List_of_airports_in_Argentina')
+elemento_tabla   = html_element(aeropuertos_wiki,'.wikitable')
+aeropuertos      = html_table(elemento_tabla)
+
+```
+
+```{r}
+# Corrijo la columna de coordenadas 
+
+separar     = strsplit((aeropuertos$Coordinates), '/') # Divide a los strings en los lugares donde haya '/' 
+coordenadas = sapply(separar, function(x) x[3])        # Me quedo solo con el 3er tipo de coordenada
+coordenadas = gsub('[^0-9,.,-]','', coordenadas)           # Elimino los caracteres que no quiero utilizar
+
+aeropuertos = aeropuertos %>% 
+  mutate(lat = as.numeric(substr(coordenadas, 1, 9)), long = as.numeric(substr(coordenadas, 10, 18))) # Separo a mano latitud y longitud (revizar si esta todo en orden)
+
+aeropuertos = filter(aeropuertos, nchar(ICAO)>1)
+aeropuertos = aeropuertos[order(aeropuertos$ICAO),]
+```
+
+```{r}
+
+for(i in 1:length(aeropuertos$ICAO)){
+  inds = datos2$Aeropuerto==aeropuertos$IATA[i]
+  datos2[inds,c('ciudad_origen','provincia_origen','lat_origen','long_origen')] = aeropuertos[i,c("City served","Province","lat","long")]
+  
+  inds = datos2$`Origen / Destino`==aeropuertos$IATA[i]
+  datos2[inds,c('ciudad_destino','provincia_destino','lat_destino','long_destino')] = aeropuertos[i,c("City served","Province","lat","long")]
+}
+  for(i in 1:length(datos_2021$ana)){
+  inds = datos2$Aeropuerto==datos_2021$ana[i]
+  datos2[inds,c('ciudad_origen','provincia_origen','lat_origen','long_origen')] = datos_2021[i,c("nam","cpr","x","y")]
+  
+  
+  inds = datos2$`Origen / Destino`==datos_2021$ana[i]
+  datos2[inds,c('ciudad_destino','provincia_destino','lat_destino','long_destino')] = datos_2021[i,c("nam","cpr","x","y")]
+  
+  inds = datos2$Aeropuerto==datos_2021$iko[i]
+  datos2[inds,c('ciudad_destino','provincia_destino','lat_destino','long_destino')] = datos_2021[i,c("nam","cpr","x","y")]
+  
+  inds = datos2$`Origen / Destino`==datos_2021$iko[i]
+  datos2[inds,c('ciudad_destino','provincia_destino','lat_destino','long_destino')] = datos_2021[i,c("nam","cpr","x","y")]
+}
+
+datos2 = drop_na(datos2)
+datos2$distancia = distHaversine(datos2[,c("long_origen","lat_origen")],datos2[,c("long_destino","lat_destino")])/1000
+
+datos2 = datos2 %>% 
+  filter(`Aerolinea Nombre` != 0)
+```
+
+
+```{r}
+
+datos2$fecha_hora = strptime(paste(datos2$Fecha, datos2$`Hora UTC`), format = "%d/%m/%Y %H:%M:%S")
+despegues = datos2[datos2$`Tipo de Movimiento` == 'Despegue',]
+aterrizajes = datos2[datos2$`Tipo de Movimiento` == 'Aterrizaje',]
+
+```
+
+
+
+```{r}
+# dividimos en despegues y aterrizajes
+
+
+matched = left_join(despegues, aterrizajes, by= c("Aeropuerto" = "Origen / Destino", "Origen / Destino" = "Aeropuerto", "Aerolinea Nombre" = "Aerolinea Nombre", "Aeronave" = "Aeronave")) %>% 
+  mutate(tdif = as.numeric(fecha_hora.y - fecha_hora.x, units='hours')) %>%
+  group_by(Aeropuerto, fecha_hora.x, Aeronave, `Aerolinea Nombre`) %>% 
+  filter(tdif > 0) %>%
+  filter(tdif < 5) %>% 
+  filter(tdif == min(tdif))
+```
+
+Una pregunta que nos pareció interesante es ver qué pares de aeropuertos se comunican más. 
+```{r}
+library(ggplot2)
+aers = unique(datos2$Aeropuerto)
+mat = matrix(nrow = length(aers), ncol = length(aers))
+colnames(mat) = aers
+row.names(mat) = aers
+for(i in 1:length(aers)){
+  for(j in 1:length(aers)){
+    mat[i,j]  =  sum((datos2$Aeropuerto==aers[i]) & (datos2$Origen...Destino==aers[j]))
+  }
+}
+install.packages("heatmaply")
+library(heatmaply)
+help("heatmaply")
+heatmaply(mat,cellnote=mat, Rowv = NA, Colv = NA, scale="column", col_dend_up=TRUE)%>% 
+  layout(xaxis = list(side = "top"))
+```
+
+
