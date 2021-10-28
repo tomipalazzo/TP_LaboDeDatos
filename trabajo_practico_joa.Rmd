@@ -127,6 +127,7 @@ for(i in 1:length(aers)){
 install.packages("heatmaply")
 library(heatmaply)
 help("heatmaply")
+
 heatmaply(mat, Rowv = NA, Colv = NA,  col_dend_up=FALSE)%>% 
   layout(xaxis = list(side = "top"))
 ```
@@ -150,8 +151,19 @@ for(i in 1:length(matched$despegueUniversal)){
   #}
 }
 #plot(1:length(histo[1,]),histo[1,], type="s")
-barplot(histo[1,], names.arg=day(inicio + 1:fin/24)+" "+month(inicio + 1:fin/24) )
-help(barplot)
+barplot(histo[1,], names.arg=(inicio + 1:fin/24), las = 2 , cex.names=0.4)
 
 ```
+Me interesa ver cuantos vuelos realiza cada aerolinea
 
+```{r}
+aerolineas = unique(matched$`Aerolinea Nombre`)
+
+apps = matrix(nrow = 1, ncol = length(aerolineas))
+colnames(apps) = aerolineas
+for(ar in aerolineas){
+  apps[1,ar] = sum((matched$`Aerolinea Nombre`==ar))
+}
+apps = apps[1,order(apps, decreasing=T)]
+barplot(apps, las = 2, cex.names=0.4)
+```
