@@ -24,10 +24,10 @@ require(rvest) # Cargamos el paquete
 ```{r}
 # Llamamos a los DataSets
 
-datos_2021 = read.csv('../TP_LaboDeDatos/Data/sna_abril_2021_fixed_encoding.csv', encoding = 'UTF-8', sep = ',')
+datos_2021 = read.csv('Data/sna_abril_2021_fixed_encoding.csv', encoding = 'UTF-8', sep = ',')
 
 # Concateno todos los datos
-datos2= read_csv2('../TP_LaboDeDatos/Data/202109-informe-ministerio.csv')
+datos2= read_csv2('Data/202109-informe-ministerio.csv')
 
 datos2$Fecha_completa = strptime(paste(datos2$Fecha, datos2$`Hora UTC`), format = "%d/%m/%Y %H:%M:%S")
 
@@ -118,16 +118,40 @@ aers = unique(datos2$Aeropuerto)
 mat = matrix(nrow = length(aers), ncol = length(aers))
 colnames(mat) = aers
 row.names(mat) = aers
+
 for(i in 1:length(aers)){
   for(j in 1:length(aers)){
-    mat[i,j]  =  sum((datos2$Aeropuerto==aers[i]) & (datos2$Origen...Destino==aers[j]))
+    mat[i,j]  =  sum((datos2$Aeropuerto==aers[i]) & (datos2$`Origen / Destino`==aers[j]))
   }
 }
 install.packages("heatmaply")
 library(heatmaply)
 help("heatmaply")
-heatmaply(mat,cellnote=mat, Rowv = NA, Colv = NA, scale="column", col_dend_up=TRUE)%>% 
+heatmaply(mat, Rowv = NA, Colv = NA,  col_dend_up=FALSE)%>% 
   layout(xaxis = list(side = "top"))
 ```
+Otra pregunta interesante es para cada hora del año que aviones estuvieron volando en ese momento
 
+Para eso primero hay que agregar una hora universal a los vuelos
+
+```{r}
+inicio = as.Date("2021-01-01")
+matched$despegueUniversal = as.integer(-difftime(inicio,matched$Fecha_completa.x, units="hours"))
+matched$llegadaUniversal = as.integer(-difftime(inicio,matched$Fecha_completa.y, units="hours")+0.9999)
+fin = max(matched$llegadaUniversal)+1
+histo = matrix(nrow=1,ncol=fin)
+histo[,c(1:fin)] = 0
+for(i in 1:length(matched$despegueUniversal)){
+  inds = matched$despegueUniversal[i]:matched$llegadaUniversal[i]
+  histo[1,inds] = histo[1,inds]+1
+  #print(histo[1,inds])
+  #for(j in matched$despegueUniversal[i]:matched$llegadaUniversal[i]){
+  #  histo[1,j] = histo[1,j]+1
+  #}
+}
+#plot(1:length(histo[1,]),histo[1,], type="s")
+barplot(histo[1,], names.arg=day(inicio + 1:fin/24)+" "+month(inicio + 1:fin/24) )
+help(barplot)
+
+```
 
