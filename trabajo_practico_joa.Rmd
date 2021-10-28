@@ -167,3 +167,11 @@ for(ar in aerolineas){
 apps = apps[1,order(apps, decreasing=T)]
 barplot(apps, las = 2, cex.names=0.4)
 ```
+```{r}
+x = 8
+apps2 = apps[1:x]
+apps2[x+1] = sum(apps[x:length(apps)])
+names(apps2)[x+1] = "OTRAS"
+names(apps2) = paste(names(apps2),apps2)
+pie(apps2, col=rainbow(length(apps2)), cex=0.5)
+```
