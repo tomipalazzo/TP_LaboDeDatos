@@ -175,3 +175,30 @@ names(apps2)[x+1] = "OTRAS"
 names(apps2) = paste(names(apps2),apps2)
 pie(apps2, col=rainbow(length(apps2)), cex=0.5)
 ```
+
+Ahora cual es el horario en el que los pasajeros viajan mas
+
+```{r}
+
+horario_vuelo = datos2 %>%
+  filter(datos2$Pasajeros > 0) %>% 
+  group_by(horario = hour(`Hora UTC`)) %>% 
+  summarise(pasajeros = mean(Pasajeros))
+
+table(horario_vuelo$horario)
+
+plot = horario_vuelo %>% 
+  ggplot(aes(x = horario, y = pasajeros, color = pasajeros)) + geom_line() +
+    geom_point() +
+  transition_reveal(horario)+labs(title = 'Cantidad promedio de pasajeros a lo largo del dia', x = 'Hora', y = 'Cantidad promedio de pasajeros')+ shadow_mark()+ scale_x_continuous(breaks = round(seq(min(horario_vuelo$horario), max(horario_vuelo$horario), by = 1),1)) +
+animate(plot, renderer = gifski_renderer(loop = FALSE))
+
+
+```
+
+```{r}
+plot = horario_vuelo %>% 
+  ggplot(aes(x = horario, y = pasajeros, fill = pasajeros)) + geom_bar(stat='identity')+transition_states(horario,100,5)+shadow_mark()+labs(title = 'Cantidad promedio de pasajeros a lo largo del dia', x = 'Hora', y = 'Cantidad promedio de pasajeros')+ scale_x_continuous(breaks = round(seq(min(horario_vuelo$horario), max(horario_vuelo$horario), by = 1),1))
+animate(plot, renderer = gifski_renderer(loop = FALSE))
+
+```
