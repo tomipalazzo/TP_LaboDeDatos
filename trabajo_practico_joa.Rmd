@@ -12,30 +12,36 @@ output:
     toc: yes
 subtitle: "Laboratorio de Datos"
 ---
-
+# Librerias
+Primero incorporamos las librerias necesarias para poder ejecutar el presente notebook.
 ```{r}
 # Librerias
-install.packages('gganimate')
-install.packages("heatmaply")
-install.packages('gifski')
-install.packages('png')
-install.packages('transformr')
+#install.packages('gganimate')
+#install.packages("heatmaply")
+#install.packages('gifski')
+#install.packages('png')
+#install.packages('units')
+#install.packages('sf')
+#install.packages('transformr')
 require(tidyverse)
 require(geosphere)
-<<<<<<< Updated upstream
+#<<<<<<< Updated upstream
 require(rvest)
-library(gganimate)
-library(lubridate)
-library(heatmaply)
-library(transformr)
-library(gifski)
-library(png)
-library(ggplot2)
-=======
+require(gganimate)
+require(lubridate)
+require(heatmaply)
+require(transformr)
+require(gifski)
+require(png)
+require(ggplot2)
+#=======
 require(rvest) # Cargamos el paquete
 require(lubridate)
->>>>>>> Stashed changes
+#>>>>>>> Stashed changes
 ```
+# Importar datos
+
+Posteriormente importamos los datos que queremos analizar y los formateamos.
 
 ```{r}
 # Llamamos a los DataSets
@@ -49,6 +55,7 @@ datos2$Fecha_completa = strptime(paste(datos2$Fecha, datos2$`Hora UTC`), format 
 
 ```
 
+En esa celda importamos los datos de los aeropuertos.
 ```{r}
 # Utilizamos la tabla que se encuentra en 'https://en.wikipedia.org/wiki/List_of_airports_in_Argentina'
 # para acceder a las variables de ciudad, provincia y coordenadas de cada aeropuerto 
@@ -58,6 +65,8 @@ elemento_tabla   = html_element(aeropuertos_wiki,'.wikitable')
 aeropuertos      = html_table(elemento_tabla)
 
 ```
+
+Particularmente, necesitamos un procesamiento especial para obtener las coordenadas de cada aeropuerto en un formato que nos sea util.
 
 ```{r}
 # Corrijo la columna de coordenadas 
@@ -72,6 +81,10 @@ aeropuertos = aeropuertos %>%
 aeropuertos = filter(aeropuertos, nchar(ICAO)>1)
 aeropuertos = aeropuertos[order(aeropuertos$ICAO),]
 ```
+
+# Procesar datos
+
+En la siguiente celda lo que hacemos es a cada vuelo le agregamos los datos relativos a sus aeropuertos de origen y destino (si los tenemos). Además, calculamos con ellos la distancia recorrida por el vuelo.
 
 ```{r}
 
@@ -104,6 +117,7 @@ datos2 = datos2 %>%
   filter(`Aerolinea Nombre` != 0)
 ```
 
+Dividimos los eventos del dataset de vuelos en aterrizajes y despegues.
 
 ```{r}
 
@@ -113,7 +127,7 @@ aterrizajes = datos2[datos2$`Tipo de Movimiento` == 'Aterrizaje',]
 
 ```
 
-
+Ahora tratamos de unir los aterrizajes y despegues con el objetivo de poder identificar todo el recorrido de un vuelo. (particularmente la hora de salida y de llegada, que son los datos que no nos dan directamente en el dataset)
 
 ```{r}
 # dividimos en despegues y aterrizajes
@@ -130,18 +144,11 @@ matched = matched %>%
   mutate(vel_media = distancia.y/tdif)
 
 ```
+# Preguntas
+### Concentración del mercado
+Las primeras preguntas que nos hemos planteado son relativas al grado de concentración que tienen los vuelos.
 
-
-Preguntas:
-
-  -Cuantos aviones hay en el aire en promedio en un rango de 2 horas
-  - Cual es el horario en el cual los pasajeros viajan mas
-  - Relacion entre la velocidad media del avion y el modelo del avion
-  - Boxplot de los 5 mas rapidos y 5 mas lentos
-  (cuidado con los mas lentos porque puede fallar)
-
-
-Una pregunta que nos pareció interesante es ver qué pares de aeropuertos se comunican más. 
+Por esto, la primera pregunta que nos interesa responder es ver cuales aeropuertos se conectan más y cuales menos. Además, notando que los casos donde el vuelo despega y aterriza en el mismo lugar son muy posiblemente vuelos de entrenamiento.
 ```{r}
 aers = unique(datos2$Aeropuerto)
 mat = matrix(nrow = length(aers), ncol = length(aers))
@@ -155,9 +162,36 @@ for(i in 1:length(aers)){
 heatmaply(mat, Rowv = NA, Colv = NA,  col_dend_up=FALSE)%>% 
   layout(xaxis = list(side = "top"))
 ```
-Otra pregunta interesante es para cada hora del año que aviones estuvieron volando en ese momento
+Resalta el aeropuerto FDO como un importante centro de entrenamiento. Por otro lado, se observa como la conexión más fuerte es claramente entre Aeroparque y Bariloche. 
 
-Para eso primero hay que agregar una hora universal a los vuelos
+La siguiente pregunta será relativa a la concentración entre distintas aerolineas. 
+
+```{r}
+aerolineas = unique(matched$`Aerolinea Nombre`)
+apps = matrix(nrow = 1, ncol = length(aerolineas))
+colnames(apps) = aerolineas
+for(ar in aerolineas){
+  apps[1,ar] = sum((matched$`Aerolinea Nombre`==ar))
+}
+apps = apps[1,order(apps, decreasing=T)]
+barplot(apps, las = 2, cex.names=0.4)
+```
+
+En este segundo grafico solo mostramos las más importantes para que sea entendible la información, además de que tiene una función más sintetica que el anterior. 
+
+```{r}
+x = 8
+apps2 = apps[1:x]
+apps2[x+1] = sum(apps[x:length(apps)])
+names(apps2)[x+1] = "OTRAS"
+names(apps2) = paste(names(apps2),apps2)
+pie(apps2, col=rainbow(length(apps2)), cex=0.5)
+```
+
+### Tiempo en el aire
+Las siguientes preguntas que nos hemos planteado feron las relativas a cuando los aviones estaban volando y cuando no.
+
+La primera fue decir exactamente en qué horas del año estuvieron más y menos aviones en el aire. Para eso primero hay que agregar una hora universal a los vuelos
 
 ```{r}
 inicio = as.Date("2021-01-01")
@@ -177,33 +211,12 @@ for(i in 1:length(matched$despegueUniversal)){
 #plot(1:length(histo[1,]),histo[1,], type="s")
 barplot(histo[1,], names.arg=(inicio + 1:fin/24), las = 2 , cex.names=0.4)
 ```
-Me interesa ver cuantos vuelos realiza cada aerolinea
 
-```{r}
-aerolineas = unique(matched$`Aerolinea Nombre`)
-apps = matrix(nrow = 1, ncol = length(aerolineas))
-colnames(apps) = aerolineas
-for(ar in aerolineas){
-  apps[1,ar] = sum((matched$`Aerolinea Nombre`==ar))
-}
-apps = apps[1,order(apps, decreasing=T)]
-barplot(apps, las = 2, cex.names=0.4)
-```
-
-```{r}
-x = 8
-apps2 = apps[1:x]
-apps2[x+1] = sum(apps[x:length(apps)])
-names(apps2)[x+1] = "OTRAS"
-names(apps2) = paste(names(apps2),apps2)
-pie(apps2, col=rainbow(length(apps2)), cex=0.5)
-```
 
 Ahora cual es el horario en el que los pasajeros viajan mas
 
 ```{r}
 require(gganimate)
-install.packages('gganimate')
 horario_vuelo = datos2 %>%
   filter(datos2$Pasajeros > 0) %>% 
   group_by(horario = hour(`Hora UTC`)) %>% 
@@ -215,13 +228,13 @@ plot = horario_vuelo %>%
   ggplot(aes(x = horario, y = pasajeros, color = pasajeros)) + geom_line() +
     geom_point() +
   transition_reveal(horario)+labs(title = 'Cantidad promedio de pasajeros a lo largo del dia', x = 'Hora', y = 'Cantidad promedio de pasajeros')+ shadow_mark()+ scale_x_continuous(breaks = round(seq(min(horario_vuelo$horario), max(horario_vuelo$horario), by = 1),1))
-animate(plot, renderer = gifski_renderer(loop = FALSE))
+animate(plot, renderer = gifski_renderer(loop = T))
 
 ```
 
 ```{r}
 plot = horario_vuelo %>% 
   ggplot(aes(x = horario, y = pasajeros, fill = pasajeros)) + geom_bar(stat='identity')+transition_states(horario,100,5)+shadow_mark()+labs(title = 'Cantidad promedio de pasajeros a lo largo del dia', x = 'Hora', y = 'Cantidad promedio de pasajeros')+ scale_x_continuous(breaks = round(seq(min(horario_vuelo$horario), max(horario_vuelo$horario), by = 1),1))
-animate(plot, renderer = gifski_renderer(loop = FALSE))
+animate(plot, renderer = gifski_renderer(loop = T))
 
 ```
