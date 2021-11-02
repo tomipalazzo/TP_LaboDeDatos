@@ -22,6 +22,7 @@ install.packages('png')
 install.packages('transformr')
 require(tidyverse)
 require(geosphere)
+<<<<<<< Updated upstream
 require(rvest)
 library(gganimate)
 library(lubridate)
@@ -30,6 +31,10 @@ library(transformr)
 library(gifski)
 library(png)
 library(ggplot2)
+=======
+require(rvest) # Cargamos el paquete
+require(lubridate)
+>>>>>>> Stashed changes
 ```
 
 ```{r}
@@ -197,7 +202,8 @@ pie(apps2, col=rainbow(length(apps2)), cex=0.5)
 Ahora cual es el horario en el que los pasajeros viajan mas
 
 ```{r}
-
+require(gganimate)
+install.packages('gganimate')
 horario_vuelo = datos2 %>%
   filter(datos2$Pasajeros > 0) %>% 
   group_by(horario = hour(`Hora UTC`)) %>% 
