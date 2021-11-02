@@ -3,31 +3,42 @@ title: "Trabajo Practico - Laboratorio de Datos"
 author: "Morales Joaquin, Lasorsa Lautaro y Palazzo Tomas"
 date: "14/10/2021"
 output:
-  html_document:
-    df_print: paged
-    toc: yes
   html_notebook:
     theme: lumen
     toc: yes
     toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
 subtitle: "Laboratorio de Datos"
 ---
 
 ```{r}
 # Librerias
+install.packages('gganimate')
+install.packages("heatmaply")
+install.packages('gifski')
+install.packages('png')
+install.packages('transformr')
 require(tidyverse)
 require(geosphere)
-require(rvest) # Cargamos el paquete
+require(rvest)
+library(gganimate)
+library(lubridate)
+library(heatmaply)
+library(transformr)
+library(gifski)
+library(png)
+library(ggplot2)
 ```
-
 
 ```{r}
 # Llamamos a los DataSets
 
-datos_2021 = read.csv('Data/sna_abril_2021_fixed_encoding.csv', encoding = 'UTF-8', sep = ',')
+datos_2021 = read.csv('../TP_LaboDeDatos/Data/sna_abril_2021_fixed_encoding.csv', encoding = 'UTF-8', sep = ',')
 
 # Concateno todos los datos
-datos2= read_csv2('Data/202109-informe-ministerio.csv')
+datos2= read_csv2('../TP_LaboDeDatos/Data/202109-informe-ministerio.csv')
 
 datos2$Fecha_completa = strptime(paste(datos2$Fecha, datos2$`Hora UTC`), format = "%d/%m/%Y %H:%M:%S")
 
@@ -105,29 +116,37 @@ aterrizajes = datos2[datos2$`Tipo de Movimiento` == 'Aterrizaje',]
 
 matched = left_join(despegues, aterrizajes, by= c("Aeropuerto" = "Origen / Destino", "Origen / Destino" = "Aeropuerto", "Aerolinea Nombre" = "Aerolinea Nombre", "Aeronave" = "Aeronave")) %>% 
   mutate(tdif = as.numeric(fecha_hora.y - fecha_hora.x, units='hours')) %>%
-  group_by(Aeropuerto, fecha_hora.x, Aeronave, `Aerolinea Nombre`) %>% 
-  filter(tdif > 0) %>%
+  group_by(Aeropuerto, fecha_hora.x, Aeronave, `Aerolinea Nombre`) %>%
+  filter(tdif > 0) %>% 
   filter(tdif < 5) %>% 
   filter(tdif == min(tdif))
+
+matched = matched %>%
+  mutate(vel_media = distancia.y/tdif)
+
 ```
+
+
+Preguntas:
+
+  -Cuantos aviones hay en el aire en promedio en un rango de 2 horas
+  - Cual es el horario en el cual los pasajeros viajan mas
+  - Relacion entre la velocidad media del avion y el modelo del avion
+  - Boxplot de los 5 mas rapidos y 5 mas lentos
+  (cuidado con los mas lentos porque puede fallar)
+
 
 Una pregunta que nos pareció interesante es ver qué pares de aeropuertos se comunican más. 
 ```{r}
-library(ggplot2)
 aers = unique(datos2$Aeropuerto)
 mat = matrix(nrow = length(aers), ncol = length(aers))
 colnames(mat) = aers
 row.names(mat) = aers
-
 for(i in 1:length(aers)){
   for(j in 1:length(aers)){
     mat[i,j]  =  sum((datos2$Aeropuerto==aers[i]) & (datos2$`Origen / Destino`==aers[j]))
   }
 }
-install.packages("heatmaply")
-library(heatmaply)
-help("heatmaply")
-
 heatmaply(mat, Rowv = NA, Colv = NA,  col_dend_up=FALSE)%>% 
   layout(xaxis = list(side = "top"))
 ```
@@ -152,13 +171,11 @@ for(i in 1:length(matched$despegueUniversal)){
 }
 #plot(1:length(histo[1,]),histo[1,], type="s")
 barplot(histo[1,], names.arg=(inicio + 1:fin/24), las = 2 , cex.names=0.4)
-
 ```
 Me interesa ver cuantos vuelos realiza cada aerolinea
 
 ```{r}
 aerolineas = unique(matched$`Aerolinea Nombre`)
-
 apps = matrix(nrow = 1, ncol = length(aerolineas))
 colnames(apps) = aerolineas
 for(ar in aerolineas){
@@ -167,6 +184,7 @@ for(ar in aerolineas){
 apps = apps[1,order(apps, decreasing=T)]
 barplot(apps, las = 2, cex.names=0.4)
 ```
+
 ```{r}
 x = 8
 apps2 = apps[1:x]
@@ -190,9 +208,8 @@ table(horario_vuelo$horario)
 plot = horario_vuelo %>% 
   ggplot(aes(x = horario, y = pasajeros, color = pasajeros)) + geom_line() +
     geom_point() +
-  transition_reveal(horario)+labs(title = 'Cantidad promedio de pasajeros a lo largo del dia', x = 'Hora', y = 'Cantidad promedio de pasajeros')+ shadow_mark()+ scale_x_continuous(breaks = round(seq(min(horario_vuelo$horario), max(horario_vuelo$horario), by = 1),1)) +
+  transition_reveal(horario)+labs(title = 'Cantidad promedio de pasajeros a lo largo del dia', x = 'Hora', y = 'Cantidad promedio de pasajeros')+ shadow_mark()+ scale_x_continuous(breaks = round(seq(min(horario_vuelo$horario), max(horario_vuelo$horario), by = 1),1))
 animate(plot, renderer = gifski_renderer(loop = FALSE))
-
 
 ```
 
