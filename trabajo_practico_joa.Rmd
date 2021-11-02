@@ -3,18 +3,18 @@ title: "Trabajo Practico - Laboratorio de Datos"
 author: "Morales Joaquin, Lasorsa Lautaro y Palazzo Tomas"
 date: "14/10/2021"
 output:
+  html_document:
+    df_print: paged
+    toc: yes
   html_notebook:
     theme: lumen
     toc: yes
     toc_float: yes
-  html_document:
-    df_print: paged
-    toc: yes
 subtitle: "Laboratorio de Datos"
 ---
 # Librerias
 Primero incorporamos las librerias necesarias para poder ejecutar el presente notebook.
-```{r}
+```{r message=FALSE, warning=FALSE}
 # Librerias
 #install.packages('gganimate')
 #install.packages("heatmaply")
@@ -43,7 +43,7 @@ require(lubridate)
 
 Posteriormente importamos los datos que queremos analizar y los formateamos.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # Llamamos a los DataSets
 
 datos_2021 = read.csv('../TP_LaboDeDatos/Data/sna_abril_2021_fixed_encoding.csv', encoding = 'UTF-8', sep = ',')
@@ -215,7 +215,7 @@ barplot(histo[1,], names.arg=(inicio + 1:fin/24), las = 2 , cex.names=0.4)
 
 Ahora cual es el horario en el que los pasajeros viajan mas
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 require(gganimate)
 horario_vuelo = datos2 %>%
   filter(datos2$Pasajeros > 0) %>% 
@@ -232,7 +232,7 @@ animate(plot, renderer = gifski_renderer(loop = T))
 
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 plot = horario_vuelo %>% 
   ggplot(aes(x = horario, y = pasajeros, fill = pasajeros)) + geom_bar(stat='identity')+transition_states(horario,100,5)+shadow_mark()+labs(title = 'Cantidad promedio de pasajeros a lo largo del dia', x = 'Hora', y = 'Cantidad promedio de pasajeros')+ scale_x_continuous(breaks = round(seq(min(horario_vuelo$horario), max(horario_vuelo$horario), by = 1),1))
 animate(plot, renderer = gifski_renderer(loop = T))
