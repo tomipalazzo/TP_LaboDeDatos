@@ -162,6 +162,15 @@ for(i in 1:length(aers)){
 heatmaply(mat, Rowv = NA, Colv = NA,  col_dend_up=FALSE)%>% 
   layout(xaxis = list(side = "top"))
 ```
+Ahora vamos a ver qué ocurre con el grafico anterior si lo pasamos a escala logaritmica (agregando 1 para evitar los -inf)
+
+```{r}
+mat2 = log(mat+1)
+heatmaply(mat2, Rowv = NA, Colv = NA,  col_dend_up=FALSE)%>% 
+  layout(xaxis = list(side = "top"))
+```
+Como se puede ver, hay mayor cantidad de relaciones que se vuelven visibles y diferenciables gracias al cambio de escala.
+
 Resalta el aeropuerto FDO como un importante centro de entrenamiento. Por otro lado, se observa como la conexión más fuerte es claramente entre Aeroparque y Bariloche. 
 
 La siguiente pregunta será relativa a la concentración entre distintas aerolineas. 
@@ -174,10 +183,31 @@ for(ar in aerolineas){
   apps[1,ar] = sum((matched$`Aerolinea Nombre`==ar))
 }
 apps = apps[1,order(apps, decreasing=T)]
-barplot(apps, las = 2, cex.names=0.4)
-```
+#barplot(apps, las = 2, cex.names=0.4)
+ejey <- list(title="Aerolineas", categoryorder = "array",
+              categoryarray = rev(names(apps)), tickfont = list(size=4))
+dfapps = data.frame(names(apps),apps)
+dfapps = rename(dfapps,Aerolineas = names.apps., Cantidad = apps)
+fig <- plot_ly(dfapps, x = ~Cantidad, y = ~Aerolineas, type = "bar") %>% 
+ layout(yaxis = ejey)
 
-En este segundo grafico solo mostramos las más importantes para que sea entendible la información, además de que tiene una función más sintetica que el anterior. 
+fig
+```
+Y ahora probamos de repetir el ejercicio de expresar las distintas cantidades en escala logaritmica para ver el efecto.
+```{r}
+appslog = log(apps+1)
+#barplot(apps, las = 2, cex.names=0.4)
+ejey <- list(title="Aerolineas", categoryorder = "array",
+              categoryarray = rev(names(apps)), tickfont = list(size=4))
+dfapps = data.frame(names(appslog),appslog)
+dfapps = rename(dfapps,Aerolineas = names.appslog., Cantidad = appslog)
+fig <- plot_ly(dfapps, x = ~Cantidad, y = ~Aerolineas, type = "bar") %>% 
+ layout(yaxis = ejey)
+fig
+```
+En este nuevo grafico se confirma la idea de que hay una enorme concentración de los vuelos en pocas empresas.
+
+En este tercer grafico solo mostramos las más importantes para que sea entendible la información, además de que tiene una función más sintetica que los anteriores. 
 
 ```{r}
 x = 8
@@ -186,12 +216,10 @@ apps2[x+1] = sum(apps[x:length(apps)])
 names(apps2)[x+1] = "OTRAS"
 names(apps2) = paste(names(apps2),apps2)
 
-
-fig <- plot_ly(data = as.data.frame(apps2), labels = names(apps2), values = apps2, type = 'pie')
+fig <- plot_ly(data = as.data.frame(apps2), labels = names(apps2), values = apps2, type = 'pie', sort=FALSE)
 fig <- fig %>% layout(title = 'Cantidad de vuelos por aerolinea',
          xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
-         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
-
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)) 
 fig
 ```
 
@@ -215,12 +243,67 @@ for(i in 1:length(matched$despegueUniversal)){
   #  histo[1,j] = histo[1,j]+1
   #}
 }
+5%%2
 #plot(1:length(histo[1,]),histo[1,], type="s")
-barplot(histo[1,], names.arg=(inicio + 1:fin/24), las = 2 , cex.names=0.4)
+ts= paste((inicio + 1:fin/24), as.character(1:fin%%24))
+eje <- list(title="Hora", categoryorder = "array",
+              categoryarray = as.character(ts), tickfont = list(size=5))
+print(typeof(eje$categoryarray))
+temp = data.frame(histo[1,],Fecha =eje$categoryarray)
+temp = rename(temp,Cantidad = histo.1...)
+fig <- plot_ly(temp, y = ~Cantidad, x = ~Fecha, type = "bar") %>% 
+ layout(xaxis = eje)
 
+fig
 
 ```
 
+Para evitar el ruido y las pequeñas variaciones diarias y semanales, vamos a repetir el grafico suavizado por día y por semana.
+
+```{r}
+
+#plot(1:length(histo[1,]),histo[1,], type="s")
+
+histo2 = matrix(nrow = 1, ncol = length(histo[1,])-23)
+length(histo2)
+for(i in 24:(fin-23)){
+  #print((i-23):i)
+  histo2[1,i-23] = sum(histo[1,(i-23):i])/24
+}
+ts= paste((inicio + 24:fin/24), as.character(24:fin%%24))
+eje <- list(title="Hora", categoryorder = "array",
+              categoryarray = as.character(ts), tickfont = list(size=5))
+print(typeof(eje$categoryarray))
+temp = data.frame(histo2[1,],Fecha =eje$categoryarray)
+temp = rename(temp,Cantidad = histo2.1...)
+fig <- plot_ly(temp, y = ~Cantidad, x = ~Fecha,  type = 'scatter', mode = 'lines') %>% 
+ layout(xaxis = eje)
+
+fig
+
+```
+```{r}
+
+#plot(1:length(histo[1,]),histo[1,], type="s")
+lim = 24*7
+histo3 = matrix(nrow = 1, ncol = length(histo[1,])-lim+1)
+for(i in lim:(fin-lim+1)){
+  #print((i-23):i)
+  histo3[1,i-lim+1] = sum(histo[1,(i-lim+1):i])/lim
+}
+ts= paste((inicio + lim:fin/24), as.character(lim:fin%%24))
+eje <- list(title="Hora", categoryorder = "array",
+              categoryarray = as.character(ts), tickfont = list(size=5))
+print(typeof(eje$categoryarray))
+temp = data.frame(histo3[1,],Fecha =eje$categoryarray)
+temp = rename(temp,Cantidad = histo3.1...)
+fig <- plot_ly(temp, y = ~Cantidad, x = ~Fecha,  type = 'scatter', mode = 'lines') %>% 
+ layout(xaxis = eje)
+
+fig
+
+```
+En el grafico con el promedio semanal movil se puede apreciar especialmente la caida en la cantidad de aviones en el aire durante la mitad del año
 
 Ahora cual es el horario en el que los pasajeros viajan mas
 
