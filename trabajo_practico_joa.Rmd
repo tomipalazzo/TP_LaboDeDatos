@@ -3,13 +3,13 @@ title: "Trabajo Practico - Laboratorio de Datos"
 author: "Morales Joaquin, Lasorsa Lautaro y Palazzo Tomas"
 date: "14/10/2021"
 output:
-  html_document:
-    df_print: paged
-    toc: yes
   html_notebook:
     theme: lumen
     toc: yes
     toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
 subtitle: "Laboratorio de Datos"
 ---
 # Librerias
@@ -185,7 +185,14 @@ apps2 = apps[1:x]
 apps2[x+1] = sum(apps[x:length(apps)])
 names(apps2)[x+1] = "OTRAS"
 names(apps2) = paste(names(apps2),apps2)
-pie(apps2, col=rainbow(length(apps2)), cex=0.5)
+
+
+fig <- plot_ly(data = as.data.frame(apps2), labels = names(apps2), values = apps2, type = 'pie')
+fig <- fig %>% layout(title = 'Cantidad de vuelos por aerolinea',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+fig
 ```
 
 ### Tiempo en el aire
@@ -210,6 +217,8 @@ for(i in 1:length(matched$despegueUniversal)){
 }
 #plot(1:length(histo[1,]),histo[1,], type="s")
 barplot(histo[1,], names.arg=(inicio + 1:fin/24), las = 2 , cex.names=0.4)
+
+
 ```
 
 
@@ -233,8 +242,9 @@ animate(plot, renderer = gifski_renderer(loop = T))
 ```
 
 ```{r message=FALSE, warning=FALSE}
-plot = horario_vuelo %>% 
+plot <- horario_vuelo %>% 
   ggplot(aes(x = horario, y = pasajeros, fill = pasajeros)) + geom_bar(stat='identity')+transition_states(horario,100,5)+shadow_mark()+labs(title = 'Cantidad promedio de pasajeros a lo largo del dia', x = 'Hora', y = 'Cantidad promedio de pasajeros')+ scale_x_continuous(breaks = round(seq(min(horario_vuelo$horario), max(horario_vuelo$horario), by = 1),1))
 animate(plot, renderer = gifski_renderer(loop = T))
+
 
 ```
