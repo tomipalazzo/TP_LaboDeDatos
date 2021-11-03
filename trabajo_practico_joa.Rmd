@@ -3,13 +3,13 @@ title: "Trabajo Practico - Laboratorio de Datos"
 author: "Morales Joaquin, Lasorsa Lautaro y Palazzo Tomas"
 date: "14/10/2021"
 output:
+  html_document:
+    df_print: paged
+    toc: yes
   html_notebook:
     theme: lumen
     toc: yes
     toc_float: yes
-  html_document:
-    df_print: paged
-    toc: yes
 subtitle: "Laboratorio de Datos"
 ---
 # Librerias
@@ -224,7 +224,7 @@ fig
 ```
 
 ### Tiempo en el aire
-Las siguientes preguntas que nos hemos planteado feron las relativas a cuando los aviones estaban volando y cuando no.
+Las siguientes preguntas que nos hemos planteado fueron las relativas a cuando los aviones estaban volando y cuando no.
 
 La primera fue decir exactamente en qué horas del año estuvieron más y menos aviones en el aire. Para eso primero hay que agregar una hora universal a los vuelos
 
@@ -243,12 +243,10 @@ for(i in 1:length(matched$despegueUniversal)){
   #  histo[1,j] = histo[1,j]+1
   #}
 }
-5%%2
 #plot(1:length(histo[1,]),histo[1,], type="s")
 ts= paste((inicio + 1:fin/24), as.character(1:fin%%24))
 eje <- list(title="Hora", categoryorder = "array",
               categoryarray = as.character(ts), tickfont = list(size=5))
-print(typeof(eje$categoryarray))
 temp = data.frame(histo[1,],Fecha =eje$categoryarray)
 temp = rename(temp,Cantidad = histo.1...)
 fig <- plot_ly(temp, y = ~Cantidad, x = ~Fecha, type = "bar") %>% 
@@ -273,15 +271,17 @@ for(i in 24:(fin-23)){
 ts= paste((inicio + 24:fin/24), as.character(24:fin%%24))
 eje <- list(title="Hora", categoryorder = "array",
               categoryarray = as.character(ts), tickfont = list(size=5))
-print(typeof(eje$categoryarray))
+
 temp = data.frame(histo2[1,],Fecha =eje$categoryarray)
 temp = rename(temp,Cantidad = histo2.1...)
 fig <- plot_ly(temp, y = ~Cantidad, x = ~Fecha,  type = 'scatter', mode = 'lines') %>% 
- layout(xaxis = eje)
+ layout(title = "Análisis con dia movil",xaxis = eje)
 
 fig
 
 ```
+
+
 ```{r}
 
 #plot(1:length(histo[1,]),histo[1,], type="s")
@@ -294,11 +294,11 @@ for(i in lim:(fin-lim+1)){
 ts= paste((inicio + lim:fin/24), as.character(lim:fin%%24))
 eje <- list(title="Hora", categoryorder = "array",
               categoryarray = as.character(ts), tickfont = list(size=5))
-print(typeof(eje$categoryarray))
+
 temp = data.frame(histo3[1,],Fecha =eje$categoryarray)
 temp = rename(temp,Cantidad = histo3.1...)
 fig <- plot_ly(temp, y = ~Cantidad, x = ~Fecha,  type = 'scatter', mode = 'lines') %>% 
- layout(xaxis = eje)
+ layout(title = "Análisis con semana movil",xaxis = eje)
 
 fig
 
@@ -313,8 +313,6 @@ horario_vuelo = datos2 %>%
   filter(datos2$Pasajeros > 0) %>% 
   group_by(horario = hour(`Hora UTC`)) %>% 
   summarise(pasajeros = mean(Pasajeros))
-
-table(horario_vuelo$horario)
 
 plot = horario_vuelo %>% 
   ggplot(aes(x = horario, y = pasajeros, color = pasajeros)) + geom_line() +
@@ -331,3 +329,32 @@ animate(plot, renderer = gifski_renderer(loop = T))
 
 
 ```
+
+
+Cuales son los 3 modelos de avion mas usado por las 3 aerolineas mas importantes para mas claridad y visibilidad del grafico, ya que para el resto de aerolineas, los numeros no eran tan significativos.
+```{r}
+## me quedo con las 3 mas importantes
+
+aerolineas_data= matched %>%
+  group_by(`Aerolinea Nombre`) %>% 
+  count(Aeronave) %>% 
+  filter(Aeronave != 0) %>% 
+  top_n(n=3, wt = n) %>%
+  filter(`Aerolinea Nombre` == "AEROLINEAS ARGENTINAS SA" || `Aerolinea Nombre` == "FB LÍNEAS AÉREAS - FLYBONDI" ||`Aerolinea Nombre` =="JETSMART AIRLINES S.A." ) %>% 
+  arrange(`Aerolinea Nombre`)
+  
+
+
+plotaero = ggplot(data = aerolineas_data, mapping = aes(x = Aeronave, y = n)) +
+  geom_bar(stat = 'identity', color = 'blue', fill = 'blue')+
+  labs(y = "Cantidad de vuelos por aeronave") +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 3),
+        axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)),
+        plot.margin=unit(c(1,1,1.5,1.2),"cm"),
+        strip.text = element_text(face = "bold", color = "black", hjust = 0, size = 8),
+        strip.background = element_rect(fill = "gray90", color = "gray")) + 
+  facet_wrap(~`Aerolinea Nombre`, scales = "free_x")+scale_color_viridis()
+  ggplotly(plotaero)
+```
+
