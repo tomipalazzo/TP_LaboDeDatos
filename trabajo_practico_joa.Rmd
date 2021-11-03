@@ -341,10 +341,10 @@ aerolineas_data= matched %>%
   filter(Aeronave != 0) %>% 
   top_n(n=3, wt = n) %>%
   filter(`Aerolinea Nombre` == "AEROLINEAS ARGENTINAS SA" || `Aerolinea Nombre` == "FB LÍNEAS AÉREAS - FLYBONDI" ||`Aerolinea Nombre` =="JETSMART AIRLINES S.A." ) %>% 
-  arrange(`Aerolinea Nombre`)
+  arrange(`Aerolinea Nombre`) 
   
-
-
+aerolineas_data = aerolineas_data[order(aerolineas_data$n),]
+aerolineas_data$Aeronave = paste(rev(as.character(1:length(aerolineas_data$Aeronave))),aerolineas_data$Aeronave)
 plotaero = ggplot(data = aerolineas_data, mapping = aes(x = Aeronave, y = n)) +
   geom_bar(stat = 'identity', color = 'blue', fill = 'blue')+
   labs(y = "Cantidad de vuelos por aeronave") +
