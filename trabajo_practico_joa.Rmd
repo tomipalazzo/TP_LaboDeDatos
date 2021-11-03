@@ -125,9 +125,10 @@ datos2$fecha_hora = strptime(paste(datos2$Fecha, datos2$`Hora UTC`), format = "%
 despegues = datos2[datos2$`Tipo de Movimiento` == 'Despegue',]
 aterrizajes = datos2[datos2$`Tipo de Movimiento` == 'Aterrizaje',]
 
+datos2
 ```
 
-Ahora tratamos de unir los aterrizajes y despegues con el objetivo de poder identificar todo el recorrido de un vuelo. (particularmente la hora de salida y de llegada, que son los datos que no nos dan directamente en el dataset)
+Ahora tratamos de unir los aterrizajes y despegues con el objetivo de poder identificar todo el recorrido de un vuelo. (particularmente la hora de salida y de llegada, que son los datos que no nos dan directamente en el dataset, y ademas la velocidad media teniendo el tiempo de viaje)
 
 ```{r}
 # dividimos en despegues y aterrizajes
@@ -224,7 +225,7 @@ fig
 ```
 
 ### Tiempo en el aire
-Las siguientes preguntas que nos hemos planteado fueron las relativas a cuando los aviones estaban volando y cuando no.
+Las siguientes preguntas que nos hemos planteado fueron las relativas a cuando los aviones estaban volando y cuando no. Ya que nos parecia curioso ver cual era la cantidad de aviones que volaban simultaneamente, dicho de otra forma cuando se "cruzan", independiente al destino que tengan
 
 La primera fue decir exactamente en qué horas del año estuvieron más y menos aviones en el aire. Para eso primero hay que agregar una hora universal a los vuelos
 
@@ -303,9 +304,9 @@ fig <- plot_ly(temp, y = ~Cantidad, x = ~Fecha,  type = 'scatter', mode = 'lines
 fig
 
 ```
-En el grafico con el promedio semanal movil se puede apreciar especialmente la caida en la cantidad de aviones en el aire durante la mitad del año
+En el grafico con el promedio semanal movil se puede apreciar especialmente la caida en la cantidad de aviones en el aire durante la mitad del año.
 
-Ahora cual es el horario en el que los pasajeros viajan mas
+Otra incognita que nos surgió fue saber cual es el horario en el que los pasajeros viajan mas, es decir, cual es el horario que registra en promedio mas cantidad de pasajeros para todos los aviones en el rango de esa hora.
 
 ```{r message=FALSE, warning=FALSE}
 require(gganimate)
@@ -322,16 +323,19 @@ animate(plot, renderer = gifski_renderer(loop = T))
 
 ```
 
+A la hora de graficar esta informacion, surgieron dos alternativas que visualmente se veian bastante informativas, y que nos parecio un detalle bueno para dejar ambos graficos a modo de mostrar lo que se charló en las clases acerca de la dicotomia a la hora de como comunicar los datos y qué se aprecia de cada grafico distinto.
+
 ```{r message=FALSE, warning=FALSE}
 plot <- horario_vuelo %>% 
   ggplot(aes(x = horario, y = pasajeros, fill = pasajeros)) + geom_bar(stat='identity')+transition_states(horario,100,5)+shadow_mark()+labs(title = 'Cantidad promedio de pasajeros a lo largo del dia', x = 'Hora', y = 'Cantidad promedio de pasajeros')+ scale_x_continuous(breaks = round(seq(min(horario_vuelo$horario), max(horario_vuelo$horario), by = 1),1))
 animate(plot, renderer = gifski_renderer(loop = T))
-
-
 ```
 
 
-Cuales son los 3 modelos de avion mas usado por las 3 aerolineas mas importantes para mas claridad y visibilidad del grafico, ya que para el resto de aerolineas, los numeros no eran tan significativos.
+
+Por ultimo, otra de las preguntas que nos nació de ver el dataset es cuales son los aviones mas usados por aerolinea, esto se reflejaria en la cantidad de observaciones de cada modelo. Para evitar datos repetidos, utilizamos el dataset 
+
+Al haber tantas aerolineas, se pierde mucha informacion, entonces nos pareció mas certero reducir el analisis centrado en las 3 aerolineas de las que hay mas datos, es decir Aerolineas Argentinas, Flybondi y Jetsmart Airlines y ver que clase de informacion obtenemos.
 ```{r}
 ## me quedo con las 3 mas importantes
 
@@ -357,4 +361,4 @@ plotaero = ggplot(data = aerolineas_data, mapping = aes(x = Aeronave, y = n)) +
   facet_wrap(~`Aerolinea Nombre`, scales = "free_x")+scale_color_viridis()
   ggplotly(plotaero)
 ```
-
+Por lo visto, los aviones mas usados son el Embraer 190, y los Boeing 737-700 / Boeing 737-800 en el caso de Aerolineas Argentinas, en Flybondi el avion mas usado tambien es el Boeing 737 en sus distintas versiones, y por ultimo en Jetsmart Airlines su unico modelo de avion es el Airbus A320, lo cual coincide con lo buscado en los respectivos sitios de cada aerolinea.
